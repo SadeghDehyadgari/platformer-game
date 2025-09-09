@@ -1,6 +1,7 @@
 # Platformer Game
 
 This project is part of the freeCodeCamp curriculum for learning Intermediate Object-Oriented Programming (OOP) concepts by building a platformer game.
+You can watch it live on: https://sadeghdehyadgari.github.io/platformer-game/
 
 ## Project Overview
 
