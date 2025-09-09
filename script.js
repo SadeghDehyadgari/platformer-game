@@ -168,34 +168,67 @@ const animate = () => {
     }
   }
 
+  // Reset collision states each frame
+  let isOnPlatform = false;
+  let horizontalCollision = false;
+
   platforms.forEach((platform) => {
-    const collisionDetectionRules = [
-      player.position.y + player.height <= platform.position.y,
-      player.position.y + player.height + player.velocity.y >=
-        platform.position.y,
-      player.position.x >= platform.position.x - player.width / 2,
-      player.position.x <=
-        platform.position.x + platform.width - player.width / 3,
-    ];
+    // Check if player is colliding with platform in any way
+    const isColliding =
+      player.position.x + player.width > platform.position.x &&
+      player.position.x < platform.position.x + platform.width &&
+      player.position.y + player.height > platform.position.y &&
+      player.position.y < platform.position.y + platform.height;
 
-    if (collisionDetectionRules.every((rule) => rule)) {
+    if (!isColliding) return;
+
+    // Calculate overlap amounts on each side
+    const overlapLeft = player.position.x + player.width - platform.position.x;
+    const overlapRight =
+      platform.position.x + platform.width - player.position.x;
+    const overlapTop = player.position.y + player.height - platform.position.y;
+    const overlapBottom =
+      platform.position.y + platform.height - player.position.y;
+
+    // Find the minimum overlap to determine collision side
+    const minOverlap = Math.min(
+      overlapLeft,
+      overlapRight,
+      overlapTop,
+      overlapBottom
+    );
+
+    // Resolve collision based on the side with minimum overlap
+    if (minOverlap === overlapTop) {
+      // Collision from top (player landing on platform)
+      player.position.y = platform.position.y - player.height;
       player.velocity.y = 0;
-      return;
-    }
-
-    const platformDetectionRules = [
-      player.position.x >= platform.position.x - player.width / 2,
-      player.position.x <=
-        platform.position.x + platform.width - player.width / 3,
-      player.position.y + player.height >= platform.position.y,
-      player.position.y <= platform.position.y + platform.height,
-    ];
-
-    if (platformDetectionRules.every((rule) => rule)) {
-      player.position.y = platform.position.y + player.height;
+      isOnPlatform = true;
+    } else if (minOverlap === overlapBottom) {
+      // Collision from bottom (player hitting platform ceiling)
+      player.position.y = platform.position.y + platform.height;
       player.velocity.y = gravity;
+    } else if (minOverlap === overlapLeft) {
+      // Collision from left
+      player.position.x = platform.position.x - player.width;
+      player.velocity.x = 0;
+      horizontalCollision = true;
+    } else if (minOverlap === overlapRight) {
+      // Collision from right
+      player.position.x = platform.position.x + platform.width;
+      player.velocity.x = 0;
+      horizontalCollision = true;
     }
   });
+
+  // Apply gravity if not on platform
+  if (!isOnPlatform && player.position.y + player.height < canvas.height) {
+    player.velocity.y += gravity;
+  } else if (player.position.y + player.height >= canvas.height) {
+    // Ground collision
+    player.position.y = canvas.height - player.height;
+    player.velocity.y = 0;
+  }
 
   checkpoints.forEach((checkpoint, index, checkpoints) => {
     const checkpointDetectionRules = [
